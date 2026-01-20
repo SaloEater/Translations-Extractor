@@ -1,8 +1,8 @@
 {
-"id": "blank_mixin_mod",
+    "id": "translations_extractor",
     "pack": {
         "description": {
-            "translate": "Blank Mixin Mod"
+            "translate": "Translations Extractor resources"
         },
         "pack_format": 81
     }
