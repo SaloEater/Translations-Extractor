@@ -37,7 +37,7 @@ public class Config {
 
             hideExistingTranslations = builder
                     .comment("If true, only include keys that are missing in the target language (hide already translated keys)")
-                    .define("hideExistingTranslations", true);
+                    .define("hideExistingTranslations", false);
 
             includeSourceLanguageFiles = builder
                     .comment("If true, also include source language files in the resource pack")
