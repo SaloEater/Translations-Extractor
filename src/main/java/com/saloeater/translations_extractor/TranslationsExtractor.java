@@ -42,18 +42,25 @@ public class TranslationsExtractor
                 var packName = Config.CLIENT.resourcePackName.get();
                 Path resourcePackPath = Minecraft.getInstance().getResourcePackDirectory().resolve(packName);
 
-
                 backupExistingPack(resourcePackPath, packName);
 
                 ModuleManager moduleManager = new ModuleManager();
-                moduleManager.executeAll(resourcePackPath);
+                var folderCreated = moduleManager.executeAll(resourcePackPath);
 
-                writePackMcmeta(resourcePackPath);
+                if (folderCreated) {
+                    writePackMcmeta(resourcePackPath);
+                    context.getSource().sendSuccess(
+                            () -> net.minecraft.network.chat.Component.translatable("translations_extractor.extract.translations.success", resourcePackPath),
+                            false
+                    );
+                } else {
+                    context.getSource().sendSuccess(
+                            () -> net.minecraft.network.chat.Component.translatable("translations_extractor.extract.translations.no_data"),
+                            false
+                    );
+                }
 
-                context.getSource().sendSuccess(
-                        () -> net.minecraft.network.chat.Component.translatable("translations_extractor.extract.translations.success", resourcePackPath),
-                    false
-                );
+
 
                 return 1;
             }).build().createBuilder()

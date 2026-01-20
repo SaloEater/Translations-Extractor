@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static net.minecraft.util.datafix.fixes.BlockEntitySignTextStrictJsonFix.GSON;
 
@@ -25,7 +26,7 @@ public class LangModule implements Module {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     @Override
-    public void execute(Path resourcePackPath) {
+    public boolean execute(Path resourcePackPath) {
         ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
         var langFrom = Config.CLIENT.sourceLanguage.get();
         var langTo = Config.CLIENT.targetLanguage.get();
@@ -36,6 +37,8 @@ public class LangModule implements Module {
 
         Map<ResourceLocation, List<InputStream>> langsFrom = new HashMap<>();
         Map<ResourceLocation, List<InputStream>> langsTo = new HashMap<>();
+
+        AtomicBoolean folderCreated = new AtomicBoolean(false);
 
         resourceManager.listPacks().forEach(pack -> {
             var namespaces = pack.getNamespaces(PackType.CLIENT_RESOURCES);
@@ -102,6 +105,7 @@ public class LangModule implements Module {
                     }
 
                     GSON.newBuilder().setPrettyPrinting().create().toJson(finalMap, writer);
+                    folderCreated.set(true);
                 }
                 LOGGER.info("Wrote merged translations to: {}", outputPath);
 
@@ -110,6 +114,7 @@ public class LangModule implements Module {
                     Path sourceOutputPath = resourcePackPath.resolve("assets").resolve(namespace).resolve("lang").resolve(sourceFileName);
                     try (var writer = Files.newBufferedWriter(sourceOutputPath, StandardCharsets.UTF_8)) {
                         GSON.newBuilder().setPrettyPrinting().create().toJson(fromMap, writer);
+                        folderCreated.set(true);
                     }
                     LOGGER.info("Wrote source translations to: {}", sourceOutputPath);
                 }
@@ -117,6 +122,8 @@ public class LangModule implements Module {
                 LOGGER.error("Error writing translations for {}", namespace, e);
             }
         });
+
+        return folderCreated.get();
     }
 
     private static @NotNull Map<String, Map<String, String>> squashLanguageMap(Map<ResourceLocation, List<InputStream>> langsFrom) {

@@ -15,9 +15,11 @@ public class ModuleManager {
         modules.add(new LangModule());
     }
 
-    public void executeAll(Path resourcePackPath) {
+    public boolean executeAll(Path resourcePackPath) {
+        boolean folderCreated = false;
         for (Module module : modules) {
-            module.execute(resourcePackPath);
+            folderCreated = folderCreated || module.execute(resourcePackPath);
         }
+        return folderCreated;
     }
 }
