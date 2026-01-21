@@ -1,6 +1,5 @@
 package com.saloeater.translations_extractor.module;
 
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.logging.LogUtils;
@@ -11,6 +10,7 @@ import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
+import vazkii.patchouli.api.PatchouliAPI;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,8 +21,9 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static net.minecraft.util.datafix.fixes.BlockEntitySignTextStrictJsonFix.GSON;
 
-public class LangModule implements Module {
+public class PatchouliModule implements Module {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     @Override
@@ -43,27 +44,27 @@ public class LangModule implements Module {
         resourceManager.listPacks().forEach(pack -> {
             var namespaces = pack.getNamespaces(PackType.CLIENT_RESOURCES);
             namespaces.forEach(namespace ->
-                pack.listResources(PackType.CLIENT_RESOURCES, namespace, "lang", (resourceLocation, ioSupplier) -> {
-                    if (resourceLocation.getPath().endsWith(langFrom + ".json")) {
-                        try {
-                            if (!langsFrom.containsKey(resourceLocation)) {
-                                langsFrom.put(resourceLocation, new ArrayList<>());
+                    pack.listResources(PackType.CLIENT_RESOURCES, namespace, "patchouli_books", (resourceLocation, ioSupplier) -> {
+                        if (resourceLocation.getPath().endsWith(langFrom + ".json")) {
+                            try {
+                                if (!langsFrom.containsKey(resourceLocation)) {
+                                    langsFrom.put(resourceLocation, new ArrayList<>());
+                                }
+                                langsFrom.get(resourceLocation).add(ioSupplier.get());
+                            } catch (IOException e) {
+                                LOGGER.error("Error reading structure from pack: {}", resourceLocation, e);
                             }
-                            langsFrom.get(resourceLocation).add(ioSupplier.get());
-                        } catch (IOException e) {
-                            LOGGER.error("Error reading structure from pack: {}", resourceLocation, e);
-                        }
-                    } else if (resourceLocation.getPath().endsWith(langTo + ".json")) {
-                        try {
-                            if (!langsTo.containsKey(resourceLocation)) {
-                                langsTo.put(resourceLocation, new ArrayList<>());
+                        } else if (resourceLocation.getPath().endsWith(langTo + ".json")) {
+                            try {
+                                if (!langsTo.containsKey(resourceLocation)) {
+                                    langsTo.put(resourceLocation, new ArrayList<>());
+                                }
+                                langsTo.get(resourceLocation).add(ioSupplier.get());
+                            } catch (IOException e) {
+                                LOGGER.error("Error reading structure from pack: {}", resourceLocation, e);
                             }
-                            langsTo.get(resourceLocation).add(ioSupplier.get());
-                        } catch (IOException e) {
-                            LOGGER.error("Error reading structure from pack: {}", resourceLocation, e);
                         }
-                    }
-                })
+                    })
             );
         });
 
@@ -104,7 +105,7 @@ public class LangModule implements Module {
                         finalMap.putAll(existingMap);
                     }
 
-                    (new GsonBuilder()).setPrettyPrinting().create().toJson(finalMap, writer);
+                    GSON.newBuilder().setPrettyPrinting().create().toJson(finalMap, writer);
                     folderCreated.set(true);
                 }
                 LOGGER.info("Wrote merged translations to: {}", outputPath);
@@ -113,7 +114,7 @@ public class LangModule implements Module {
                     String sourceFileName = langFrom + ".json";
                     Path sourceOutputPath = resourcePackPath.resolve("assets").resolve(namespace).resolve("lang").resolve(sourceFileName);
                     try (var writer = Files.newBufferedWriter(sourceOutputPath, StandardCharsets.UTF_8)) {
-                        (new GsonBuilder()).setPrettyPrinting().create().toJson(fromMap, writer);
+                        GSON.newBuilder().setPrettyPrinting().create().toJson(fromMap, writer);
                         folderCreated.set(true);
                     }
                     LOGGER.info("Wrote source translations to: {}", sourceOutputPath);
@@ -131,7 +132,7 @@ public class LangModule implements Module {
         langsFrom.forEach((resourceLocation, streams) -> {
             streams.forEach(stream -> {
                 try (stream) {
-                    var jsonobject = (new GsonBuilder()).create().fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), JsonObject.class);
+                    var jsonobject = GSON.fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), JsonObject.class);
                     if (jsonobject == null) {
                         return;
                     }

@@ -13,6 +13,7 @@ public class ModuleManager {
 
     private void registerModules() {
         modules.add(new LangModule());
+        modules.add(new PatchouliModule());
     }
 
     public boolean executeAll(Path resourcePackPath) {

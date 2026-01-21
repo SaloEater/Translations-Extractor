@@ -1,5 +1,6 @@
 package com.saloeater.translations_extractor;
 
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.mojang.logging.LogUtils;
 import com.saloeater.translations_extractor.config.Config;
@@ -19,8 +20,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
-
-import static net.minecraft.util.datafix.fixes.BlockEntitySignTextStrictJsonFix.GSON;
 
 @Mod(TranslationsExtractor.MODID)
 public class TranslationsExtractor
@@ -85,6 +84,7 @@ public class TranslationsExtractor
     private void writePackMcmeta(Path resourcePackPath) {
         Path outputPath = resourcePackPath.resolve("pack.mcmeta");
         try (var writer = Files.newBufferedWriter(outputPath, StandardCharsets.UTF_8)) {
+            var GSON = (new GsonBuilder()).create();
             var mcmeta = new JsonObject();
             mcmeta.add("pack", GSON.toJsonTree(Map.of(
                 "pack_format", 15,
