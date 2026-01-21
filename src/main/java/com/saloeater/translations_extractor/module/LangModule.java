@@ -95,6 +95,12 @@ public class LangModule implements Module {
                 return;
             }
 
+            var missedKeys = new ArrayList<String>();
+            missingMap.forEach((key, value) -> {
+                missedKeys.add(key);
+            });
+            LOGGER.info("Namespace '{}' is missing {} translations: {}", namespace, missingMap.size(), missedKeys);
+
             String fileName = langTo + ".json";
             Path outputPath = resourcePackPath.resolve("assets").resolve(namespace).resolve("lang").resolve(fileName);
 
