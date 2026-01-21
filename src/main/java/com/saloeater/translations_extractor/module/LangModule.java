@@ -6,10 +6,10 @@ import com.google.gson.JsonObject;
 import com.mojang.logging.LogUtils;
 import com.saloeater.translations_extractor.config.Config;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraftforge.fml.ModList;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
@@ -21,13 +21,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class LangModule implements Module {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     @Override
-    public boolean execute(Path resourcePackPath) {
+    public String getName() {
+        return "lang";
+    }
+
+    @Override
+    public ModuleResult execute(Path resourcePackPath) {
         ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
         var langFrom = Config.CLIENT.sourceLanguage.get();
         var langTo = Config.CLIENT.targetLanguage.get();
@@ -41,6 +47,8 @@ public class LangModule implements Module {
         Map<ResourceLocation, List<InputStream>> langsTo = new HashMap<>();
 
         AtomicBoolean folderCreated = new AtomicBoolean(false);
+        AtomicInteger totalMissing = new AtomicInteger(0);
+        AtomicInteger namespacesProcessed = new AtomicInteger(0);
 
         resourceManager.listPacks().forEach(pack -> {
             var namespaces = pack.getNamespaces(PackType.CLIENT_RESOURCES);
@@ -114,8 +122,9 @@ public class LangModule implements Module {
 
                     (new GsonBuilder()).setPrettyPrinting().create().toJson(finalMap, writer);
                     folderCreated.set(true);
+                    totalMissing.addAndGet(missingMap.size());
+                    namespacesProcessed.incrementAndGet();
                 }
-//                LOGGER.info("Wrote merged translations to: {}", outputPath);
 
                 if (includeSource) {
                     String sourceFileName = langFrom + ".json";
@@ -124,14 +133,19 @@ public class LangModule implements Module {
                         (new GsonBuilder()).setPrettyPrinting().create().toJson(fromMap, writer);
                         folderCreated.set(true);
                     }
-//                    LOGGER.info("Wrote source translations to: {}", sourceOutputPath);
                 }
             } catch (IOException e) {
                 LOGGER.error("Error writing translations for {}", namespace, e);
             }
         });
 
-        return folderCreated.get();
+        Component summary = Component.translatable(
+                "translations_extractor.module.lang.summary",
+                namespacesProcessed.get(),
+                totalMissing.get()
+        );
+
+        return ModuleResult.of(folderCreated.get(), summary);
     }
 
     private static @NotNull Map<String, Map<String, String>> squashLanguageMap(Map<ResourceLocation, List<InputStream>> langsFrom) {

@@ -1,11 +1,10 @@
 package com.saloeater.translations_extractor.module;
 
 import com.google.gson.*;
-import com.google.gson.stream.MalformedJsonException;
 import com.mojang.logging.LogUtils;
 import com.saloeater.translations_extractor.config.Config;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.slf4j.Logger;
@@ -17,14 +16,22 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class PatchouliModule implements Module {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     @Override
-    public boolean execute(Path resourcePackPath) {
+    public String getName() {
+        return "patchouli";
+    }
+
+    @Override
+    public ModuleResult execute(Path resourcePackPath) {
         ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
         var langFrom = Config.CLIENT.sourceLanguage.get();
         var langTo = Config.CLIENT.targetLanguage.get();
@@ -32,6 +39,8 @@ public class PatchouliModule implements Module {
         var skipNamespaces = Config.CLIENT.skip.get();
 
         AtomicBoolean folderCreated = new AtomicBoolean(false);
+        AtomicInteger filesProcessed = new AtomicInteger(0);
+        Set<String> booksProcessed = new HashSet<>();
 
         String sourceLangPath = "/" + langFrom + "/";
         String targetLangPath = "/" + langTo + "/";
@@ -91,6 +100,12 @@ public class PatchouliModule implements Module {
             String namespace = parts[0];
             String filePath = parts[1];
 
+            // Extract book name from path (patchouli_books/<book_name>/...)
+            String[] pathParts = filePath.split("/");
+            if (pathParts.length >= 2) {
+                booksProcessed.add(namespace + ":" + pathParts[1]);
+            }
+
             Path outputPath = resourcePackPath.resolve("assets").resolve(namespace).resolve(filePath);
 
             try {
@@ -98,14 +113,20 @@ public class PatchouliModule implements Module {
                 try (var writer = Files.newBufferedWriter(outputPath, StandardCharsets.UTF_8)) {
                     new GsonBuilder().setPrettyPrinting().create().toJson(mergedJson, writer);
                     folderCreated.set(true);
+                    filesProcessed.incrementAndGet();
                 }
-//                LOGGER.info("Wrote patchouli file to: {}", outputPath);
             } catch (IOException e) {
                 LOGGER.error("Error writing patchouli file: {}", outputPath, e);
             }
         });
 
-        return folderCreated.get();
+        Component summary = Component.translatable(
+                "translations_extractor.module.patchouli.summary",
+                booksProcessed.size(),
+                filesProcessed.get()
+        );
+
+        return ModuleResult.of(folderCreated.get(), summary);
     }
 
     /**

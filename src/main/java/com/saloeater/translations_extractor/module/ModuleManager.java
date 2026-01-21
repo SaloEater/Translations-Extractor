@@ -1,26 +1,35 @@
 package com.saloeater.translations_extractor.module;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class ModuleManager {
-    private final List<Module> modules = new ArrayList<>();
+    private final Map<String, Module> modules = new HashMap<>();
 
     public ModuleManager() {
         registerModules();
     }
 
     private void registerModules() {
-        modules.add(new LangModule());
-        modules.add(new PatchouliModule());
+        registerModule(new LangModule());
+        registerModule(new PatchouliModule());
     }
 
-    public boolean executeAll(Path resourcePackPath) {
-        boolean folderCreated = false;
-        for (Module module : modules) {
-            folderCreated = module.execute(resourcePackPath) || folderCreated;
+    private void registerModule(Module module) {
+        modules.put(module.getName(), module);
+    }
+
+    public Set<String> getModuleNames() {
+        return modules.keySet();
+    }
+
+    public ModuleResult execute(String moduleName, Path resourcePackPath) {
+        Module module = modules.get(moduleName);
+        if (module == null) {
+            return ModuleResult.empty();
         }
-        return folderCreated;
+        return module.execute(resourcePackPath);
     }
 }

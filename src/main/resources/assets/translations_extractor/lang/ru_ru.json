@@ -1,4 +1,7 @@
 {
   "translations_extractor.extract.translations.success": "Строки для перевода успешно сгенерированы! Ресурс-пак можно найти по пути: %s",
-  "translations_extractor.extract.translations.no_data": "Не было найдено отсутствующих переводов, старый ресурс-пак был переименован в backup"
+  "translations_extractor.extract.translations.no_data": "Не было найдено отсутствующих переводов, старый ресурс-пак был переименован в backup",
+  "translations_extractor.extract.translations.unknown_module": "Неизвестный модуль '%s'. Доступные модули: %s",
+  "translations_extractor.module.lang.summary": "Lang: обработано %s пространств имён, %s отсутствующих переводов",
+  "translations_extractor.module.patchouli.summary": "Patchouli: обработано %s книг, %s файлов"
 }

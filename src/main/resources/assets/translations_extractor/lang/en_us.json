@@ -1,4 +1,7 @@
 {
   "translations_extractor.extract.translations.success": "Translation extraction complete! Resource pack created at: %s",
-  "translations_extractor.extract.translations.no_data": "No missing translations were found, old resourcepack was renamed to backup"
+  "translations_extractor.extract.translations.no_data": "No missing translations were found, old resourcepack was renamed to backup",
+  "translations_extractor.extract.translations.unknown_module": "Unknown module '%s'. Available modules: %s",
+  "translations_extractor.module.lang.summary": "Lang: processed %s namespaces, %s missing translations",
+  "translations_extractor.module.patchouli.summary": "Patchouli: processed %s books, %s files"
 }

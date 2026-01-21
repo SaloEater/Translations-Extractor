@@ -3,10 +3,13 @@ package com.saloeater.translations_extractor;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.mojang.logging.LogUtils;
+import com.saloeater.translations_extractor.command.ModuleArgument;
 import com.saloeater.translations_extractor.config.Config;
 import com.saloeater.translations_extractor.module.ModuleManager;
+import com.saloeater.translations_extractor.module.ModuleResult;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
 import net.minecraftforge.client.event.RegisterClientCommandsEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -26,6 +29,7 @@ public class TranslationsExtractor
 {
     public static final String MODID = "translations_extractor";
     private static final Logger LOGGER = LogUtils.getLogger();
+    private final ModuleManager moduleManager = new ModuleManager();
 
     public TranslationsExtractor()
     {
@@ -37,33 +41,41 @@ public class TranslationsExtractor
     @SubscribeEvent
     public void registerClientCommands(RegisterClientCommandsEvent event) {
         event.getDispatcher().register(
-            Commands.literal("extract").then(Commands.literal("translations").executes(context -> {
-                var packName = Config.CLIENT.resourcePackName.get();
-                Path resourcePackPath = Minecraft.getInstance().getResourcePackDirectory().resolve(packName);
+            Commands.literal("extract")
+                .then(Commands.literal("translations")
+                    .then(Commands.argument("module", ModuleArgument.module(moduleManager))
+                        .executes(context -> {
+                            String moduleName = ModuleArgument.getModule(context, "module");
+                            return executeModule(context.getSource(), moduleName);
+                        })
+                    )
+                )
+        );
+    }
 
-                backupExistingPack(resourcePackPath, packName);
+    private int executeModule(net.minecraft.commands.CommandSourceStack source, String moduleName) {
+        var packName = Config.CLIENT.resourcePackName.get();
+        Path resourcePackPath = Minecraft.getInstance().getResourcePackDirectory().resolve(packName);
 
-                ModuleManager moduleManager = new ModuleManager();
-                var folderCreated = moduleManager.executeAll(resourcePackPath);
+        backupExistingPack(resourcePackPath, packName);
 
-                if (folderCreated) {
-                    writePackMcmeta(resourcePackPath);
-                    context.getSource().sendSuccess(
-                            () -> net.minecraft.network.chat.Component.translatable("translations_extractor.extract.translations.success", resourcePackPath),
-                            false
-                    );
-                } else {
-                    context.getSource().sendSuccess(
-                            () -> net.minecraft.network.chat.Component.translatable("translations_extractor.extract.translations.no_data"),
-                            false
-                    );
-                }
+        ModuleResult result = moduleManager.execute(moduleName, resourcePackPath);
 
+        if (result.isFilesCreated()) {
+            writePackMcmeta(resourcePackPath);
+            source.sendSuccess(
+                () -> Component.translatable("translations_extractor.extract.translations.success", resourcePackPath),
+                false
+            );
+            source.sendSuccess(result::getSummary, false);
+        } else {
+            source.sendSuccess(
+                () -> Component.translatable("translations_extractor.extract.translations.no_data"),
+                false
+            );
+        }
 
-
-                return 1;
-            }).build().createBuilder()
-        ));
+        return 1;
     }
 
     private void backupExistingPack(Path resourcePackPath, String packName) {
