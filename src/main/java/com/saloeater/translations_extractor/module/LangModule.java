@@ -91,7 +91,7 @@ public class LangModule implements Module {
                 }
             });
 
-            if (missingMap.isEmpty() && hideWhenNoMissing) {
+            if (missingMap.isEmpty() && (hideWhenNoMissing || hideExisting)) {
                 return;
             }
 
