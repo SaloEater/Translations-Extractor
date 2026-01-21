@@ -19,7 +19,7 @@ public class ModuleManager {
     public boolean executeAll(Path resourcePackPath) {
         boolean folderCreated = false;
         for (Module module : modules) {
-            folderCreated = folderCreated || module.execute(resourcePackPath);
+            folderCreated = module.execute(resourcePackPath) || folderCreated;
         }
         return folderCreated;
     }

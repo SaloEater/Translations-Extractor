@@ -90,6 +90,12 @@ dependencies {
 
     implementation fg.deobf("vazkii.patchouli:Patchouli:${patchouli_version}")
 
+    runtimeOnly fg.deobf("curse.maven:ebmobs-921600:6095880")
+    runtimeOnly fg.deobf("curse.maven:curiosapi-309927:6418456")
+    runtimeOnly fg.deobf("curse.maven:cael-308989:5281700")
+    runtimeOnly fg.deobf("curse.maven:gl-388172:7025129")
+    runtimeOnly fg.deobf("curse.maven:tm-1084134:6054971")
+
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
 

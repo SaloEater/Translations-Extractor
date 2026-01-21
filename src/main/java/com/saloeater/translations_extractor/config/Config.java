@@ -23,6 +23,7 @@ public class Config {
         public final ForgeConfigSpec.ConfigValue<String> resourcePackName;
         public final ForgeConfigSpec.ConfigValue<List<? extends String>> only;
         public final ForgeConfigSpec.ConfigValue<List<? extends String>> skip;
+        public final ForgeConfigSpec.BooleanValue hideWhenNoMissing;
 
         public ClientConfig(ForgeConfigSpec.Builder builder) {
             builder.push("translations");
@@ -54,6 +55,10 @@ public class Config {
             skip = builder
                     .comment("Namespaces to skip when extracting translations (e.g., [\"minecraft\", \"forge\"])")
                     .defineList("skip", List.of("minecraft"), obj -> obj instanceof String);
+
+            hideWhenNoMissing = builder
+                    .comment("If true, skip namespace entirely when there are no missing translations")
+                    .define("hideWhenNoMissing", true);
 
             builder.pop();
         }

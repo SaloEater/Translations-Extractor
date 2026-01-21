@@ -9,6 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraftforge.fml.ModList;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
@@ -34,6 +35,7 @@ public class LangModule implements Module {
         var includeSource = Config.CLIENT.includeSourceLanguageFiles.get();
         var onlyNamespaces = Config.CLIENT.only.get();
         var skipNamespaces = Config.CLIENT.skip.get();
+        var hideWhenNoMissing = Config.CLIENT.hideWhenNoMissing.get();
 
         Map<ResourceLocation, List<InputStream>> langsFrom = new HashMap<>();
         Map<ResourceLocation, List<InputStream>> langsTo = new HashMap<>();
@@ -79,8 +81,8 @@ public class LangModule implements Module {
             }
 
             Map<String, String> toMap = squashedTo.get(namespace);
-            Map<String, String> missingMap = new TreeMap<>();
-            Map<String, String> existingMap = new TreeMap<>();
+            Map<String, String> missingMap = new HashMap<>();
+            Map<String, String> existingMap = new HashMap<>();
             fromMap.forEach((key, fromValue) -> {
                 if (toMap != null && toMap.containsKey(key)) {
                     existingMap.put(key, toMap.get(key));
@@ -89,7 +91,7 @@ public class LangModule implements Module {
                 }
             });
 
-            if (missingMap.isEmpty() && hideExisting) {
+            if (missingMap.isEmpty() && hideWhenNoMissing) {
                 return;
             }
 
@@ -99,7 +101,7 @@ public class LangModule implements Module {
             try {
                 Files.createDirectories(outputPath.getParent());
                 try (var writer = Files.newBufferedWriter(outputPath, StandardCharsets.UTF_8)) {
-                    Map<String, String> finalMap = new LinkedHashMap<>(missingMap);
+                    Map<String, String> finalMap = new TreeMap<>(missingMap);
                     if (!hideExisting) {
                         finalMap.putAll(existingMap);
                     }
@@ -107,7 +109,7 @@ public class LangModule implements Module {
                     (new GsonBuilder()).setPrettyPrinting().create().toJson(finalMap, writer);
                     folderCreated.set(true);
                 }
-                LOGGER.info("Wrote merged translations to: {}", outputPath);
+//                LOGGER.info("Wrote merged translations to: {}", outputPath);
 
                 if (includeSource) {
                     String sourceFileName = langFrom + ".json";
@@ -116,7 +118,7 @@ public class LangModule implements Module {
                         (new GsonBuilder()).setPrettyPrinting().create().toJson(fromMap, writer);
                         folderCreated.set(true);
                     }
-                    LOGGER.info("Wrote source translations to: {}", sourceOutputPath);
+//                    LOGGER.info("Wrote source translations to: {}", sourceOutputPath);
                 }
             } catch (IOException e) {
                 LOGGER.error("Error writing translations for {}", namespace, e);
