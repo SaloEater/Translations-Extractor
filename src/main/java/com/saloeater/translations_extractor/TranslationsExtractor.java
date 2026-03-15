@@ -55,9 +55,15 @@ public class TranslationsExtractor
 
     private int executeModule(net.minecraft.commands.CommandSourceStack source, String moduleName) {
         var packName = Config.CLIENT.resourcePackName.get();
-        Path resourcePackPath = Minecraft.getInstance().getResourcePackDirectory().resolve(packName);
+        Path resourcePackPath = Minecraft.getInstance().getResourcePackDirectory().resolve(packName + "_" + moduleName);
 
-        backupExistingPack(resourcePackPath, packName);
+        if (Files.exists(resourcePackPath)) {
+            try {
+                deleteDirectory(resourcePackPath);
+            } catch (IOException e) {
+                LOGGER.error("Failed to clear existing resource pack at: {}", resourcePackPath, e);
+            }
+        }
 
         ModuleResult result = moduleManager.execute(moduleName, resourcePackPath);
 
@@ -76,21 +82,6 @@ public class TranslationsExtractor
         }
 
         return 1;
-    }
-
-    private void backupExistingPack(Path resourcePackPath, String packName) {
-        if (Files.exists(resourcePackPath)) {
-            Path backupPath = resourcePackPath.resolveSibling(packName + "_BACKUP");
-            try {
-                if (Files.exists(backupPath)) {
-                    deleteDirectory(backupPath);
-                }
-                Files.move(resourcePackPath, backupPath);
-                LOGGER.info("Backed up existing resource pack to: {}", backupPath);
-            } catch (IOException e) {
-                LOGGER.error("Failed to backup existing resource pack", e);
-            }
-        }
     }
 
     private void writePackMcmeta(Path resourcePackPath) {
