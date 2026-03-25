@@ -16,6 +16,7 @@ public class ModuleManager {
         registerModule(new LangModule());
         registerModule(new PatchouliModule());
         registerModule(new EnchantmentsModule());
+        registerModule(new EffectsModule());
     }
 
     private void registerModule(Module module) {
