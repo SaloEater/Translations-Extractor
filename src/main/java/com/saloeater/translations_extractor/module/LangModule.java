@@ -33,11 +33,11 @@ public class LangModule implements Module {
     }
 
     @Override
-    public ModuleResult execute(Path resourcePackPath) {
+    public ModuleResult execute(Path resourcePackPath, boolean onlyMissing) {
         ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
         var langFrom = Config.CLIENT.sourceLanguage.get();
         var langTo = Config.CLIENT.targetLanguage.get();
-        var hideExisting = Config.CLIENT.hideExistingTranslations.get();
+        var hideExisting = onlyMissing || Config.CLIENT.hideExistingTranslations.get();
         var includeSource = Config.CLIENT.includeSourceLanguageFiles.get();
         var onlyNamespaces = Config.CLIENT.only.get();
         var skipNamespaces = Config.CLIENT.skip.get();

@@ -27,11 +27,11 @@ public class ModuleManager {
         return modules.keySet();
     }
 
-    public ModuleResult execute(String moduleName, Path resourcePackPath) {
+    public ModuleResult execute(String moduleName, Path resourcePackPath, boolean onlyMissing) {
         Module module = modules.get(moduleName);
         if (module == null) {
             return ModuleResult.empty();
         }
-        return module.execute(resourcePackPath);
+        return module.execute(resourcePackPath, onlyMissing);
     }
 }

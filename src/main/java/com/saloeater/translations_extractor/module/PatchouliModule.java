@@ -31,7 +31,7 @@ public class PatchouliModule implements Module {
     }
 
     @Override
-    public ModuleResult execute(Path resourcePackPath) {
+    public ModuleResult execute(Path resourcePackPath, boolean onlyMissing) {
         ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
         var langFrom = Config.CLIENT.sourceLanguage.get();
         var langTo = Config.CLIENT.targetLanguage.get();
@@ -92,6 +92,9 @@ public class PatchouliModule implements Module {
         // Process source files and merge with target if exists
         sourceFiles.forEach((normalizedPath, sourceJson) -> {
             JsonElement targetJson = targetFiles.get(normalizedPath);
+            if (onlyMissing && targetJson != null) {
+                return;
+            }
             JsonElement mergedJson = mergeJson(sourceJson, targetJson);
 
             // Build output path

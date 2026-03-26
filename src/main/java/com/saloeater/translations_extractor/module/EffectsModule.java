@@ -27,7 +27,7 @@ public class EffectsModule implements Module {
     }
 
     @Override
-    public ModuleResult execute(Path resourcePackPath) {
+    public ModuleResult execute(Path resourcePackPath, boolean onlyMissing) {
         final String lang = Minecraft.getInstance().options.languageCode;
 
         final List<ResourceLocation> sortedKeys = new ArrayList<>(BuiltInRegistries.MOB_EFFECT.keySet());
@@ -50,10 +50,21 @@ public class EffectsModule implements Module {
             if (effect == null) {
                 continue;
             }
-            final String descKey = "effect." + key.getNamespace() + "." + key.getPath() + ".description";
-            final String value = I18n.exists(descKey) ? escapeJson(I18n.get(descKey)) : "";
-            entryLines.add("    \"" + escapeJson(descKey) + "\": \"" + value + "\"");
-            entryNamespaces.add(key.getNamespace());
+            final String nameKey = "effect." + key.getNamespace() + "." + key.getPath();
+            final boolean nameExists = I18n.exists(nameKey);
+            if (!onlyMissing || !nameExists) {
+                final String nameValue = nameExists ? escapeJson(I18n.get(nameKey)) : "";
+                entryLines.add("    \"" + escapeJson(nameKey) + "\": \"" + nameValue + "\"");
+                entryNamespaces.add(key.getNamespace());
+            }
+
+            final String descKey = nameKey + ".description";
+            final boolean descExists = I18n.exists(descKey);
+            if (!onlyMissing || !descExists) {
+                final String descValue = descExists ? escapeJson(I18n.get(descKey)) : "";
+                entryLines.add("    \"" + escapeJson(descKey) + "\": \"" + descValue + "\"");
+                entryNamespaces.add(key.getNamespace());
+            }
         }
 
         try (OutputStreamWriter writer = new OutputStreamWriter(
@@ -74,7 +85,7 @@ public class EffectsModule implements Module {
         }
 
         final int count = entryLines.size();
-        return ModuleResult.of(true, Component.literal("Exported " + count + " effect descriptions in " + lang));
+        return ModuleResult.of(true, Component.literal("Exported " + count + " effect entries in " + lang));
     }
 
     private static String escapeJson(String input) {

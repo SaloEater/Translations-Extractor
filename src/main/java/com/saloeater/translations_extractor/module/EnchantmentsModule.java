@@ -27,7 +27,7 @@ public class EnchantmentsModule implements Module {
     }
 
     @Override
-    public ModuleResult execute(Path resourcePackPath) {
+    public ModuleResult execute(Path resourcePackPath, boolean onlyMissing) {
         final String lang = Minecraft.getInstance().options.languageCode;
 
         final List<ResourceLocation> sortedKeys = new ArrayList<>(BuiltInRegistries.ENCHANTMENT.keySet());
@@ -51,7 +51,11 @@ public class EnchantmentsModule implements Module {
                 continue;
             }
             final String descKey = getDescriptionKey(enchantment);
-            final String value = I18n.exists(descKey) ? escapeJson(I18n.get(descKey)) : "";
+            final boolean translationExists = I18n.exists(descKey);
+            if (onlyMissing && translationExists) {
+                continue;
+            }
+            final String value = translationExists ? escapeJson(I18n.get(descKey)) : "";
             entryLines.add("    \"" + escapeJson(descKey) + "\": \"" + value + "\"");
             entryNamespaces.add(key.getNamespace());
         }

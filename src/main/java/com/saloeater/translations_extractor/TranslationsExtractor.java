@@ -2,6 +2,7 @@ package com.saloeater.translations_extractor;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.logging.LogUtils;
 import com.saloeater.translations_extractor.command.ModuleArgument;
 import com.saloeater.translations_extractor.config.Config;
@@ -46,14 +47,21 @@ public class TranslationsExtractor
                     .then(Commands.argument("module", ModuleArgument.module(moduleManager))
                         .executes(context -> {
                             String moduleName = ModuleArgument.getModule(context, "module");
-                            return executeModule(context.getSource(), moduleName);
+                            return executeModule(context.getSource(), moduleName, false);
                         })
+                        .then(Commands.argument("onlyMissing", BoolArgumentType.bool())
+                            .executes(context -> {
+                                String moduleName = ModuleArgument.getModule(context, "module");
+                                boolean onlyMissing = BoolArgumentType.getBool(context, "onlyMissing");
+                                return executeModule(context.getSource(), moduleName, onlyMissing);
+                            })
+                        )
                     )
                 )
         );
     }
 
-    private int executeModule(net.minecraft.commands.CommandSourceStack source, String moduleName) {
+    private int executeModule(net.minecraft.commands.CommandSourceStack source, String moduleName, boolean onlyMissing) {
         var packName = Config.CLIENT.resourcePackName.get();
         Path resourcePackPath = Minecraft.getInstance().getResourcePackDirectory().resolve(packName + "_" + moduleName);
 
@@ -65,7 +73,7 @@ public class TranslationsExtractor
             }
         }
 
-        ModuleResult result = moduleManager.execute(moduleName, resourcePackPath);
+        ModuleResult result = moduleManager.execute(moduleName, resourcePackPath, onlyMissing);
 
         if (result.isFilesCreated()) {
             writePackMcmeta(resourcePackPath);
