@@ -167,7 +167,7 @@ public class LangModule implements Module {
                         squashedFrom.get(namespace).put(key, value);
                     }
 
-                } catch (IOException e) {
+                } catch (Exception e) {
                     LOGGER.error("Error reading language from pack: {}", resourceLocation, e);
                 }
             });
